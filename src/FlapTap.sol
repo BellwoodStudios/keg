@@ -63,16 +63,20 @@ contract FlapTap {
 
         keg     = keg_;
         daiJoin = daiJoin_;
-        DaiAbstract dai = DaiAbstract(daiJoin_.dai());
-        VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
         flapper = FlapAbstract(flapper_);
-        flight = flight_;
-        require((flow = flow_) <= WAD, "FlapTap/invalid-flow");
-        live = 1;
+        flight  = flight_;
+        flow    = flow_;
+        live    = 1;
+
+        VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
+        DaiAbstract dai  = DaiAbstract(daiJoin_.dai());
+
+        require(flow_ <= WAD, "FlapTap/invalid-flow");
 
         vat_.hope(flapper_);
         vat_.hope(address(daiJoin_));
-        dai.approve(address(keg_), uint256(-1));
+
+        require(dai.approve(address(keg_), uint256(-1)), "FlapTap/dai-approval-failure");
     }
 
     // --- Math ---
@@ -91,6 +95,7 @@ contract FlapTap {
 
         emit File(what, data);
     }
+
     function file(bytes32 what, uint256 data) external auth {
         if (what == "flow") require((flow = data) <= WAD, "FlapTap/invalid-flow");
         else revert("FlapTap/file-unrecognized-param");

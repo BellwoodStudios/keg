@@ -66,15 +66,15 @@ contract Tap {
 
         keg     = keg_;
         daiJoin = daiJoin_;
-        DaiAbstract dai = DaiAbstract(daiJoin_.dai());
+        vow     = vow_;
+        flight  = flight_;
+        rate    = rate_;
+        rho     = now;
         VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
-        vow = vow_;
-        flight = flight_;
-        rate = rate_;
-        rho = now;
+        DaiAbstract dai  = DaiAbstract(daiJoin_.dai());
 
         vat_.hope(address(daiJoin_));
-        dai.approve(address(keg_), uint256(-1));
+        require(dai.approve(address(keg_), uint256(-1)), "Tap/dai-approval-failure");
     }
 
     // --- Math ---
