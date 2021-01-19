@@ -36,27 +36,13 @@ contract Keg {
         _;
     }
 
-    // --- Math ---
-    uint256 constant WAD = 10 ** 18;
-
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x);
-    }
-
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x);
-    }
-
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x);
-    }
-
     // --- Stop ---
     uint256 public stopped;
     function stop() external auth { stopped = 1; emit Stop(); }
     function start() external auth { stopped = 0; emit Start(); }
     modifier stoppable { require(stopped == 0, "Keg/is-stopped"); _; }
 
+    // --- Variable ---
     DSTokenAbstract public immutable token;
 
     // Define payout ratios
@@ -71,10 +57,26 @@ contract Keg {
     event Seat(bytes32 indexed flight);
     event Revoke(bytes32 indexed flight);
 
+    // --- Init ---
     constructor(address token_) public {
         token = DSTokenAbstract(token_);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
+    }
+
+    // --- Math ---
+    uint256 constant WAD = 10 ** 18;
+
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require((z = x + y) >= x);
+    }
+
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require((z = x - y) <= x);
+    }
+
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require(y == 0 || (z = x * y) / y == x);
     }
 
     // Credits people with rights to withdraw funds from the pool using a preset flight

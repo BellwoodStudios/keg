@@ -40,9 +40,10 @@ contract Tap {
     function start() external auth { stopped = 0; }
     modifier stoppable { require(stopped == 0, "Tap/is-stopped"); _; }
 
-    VatAbstract public immutable vat;
-    address public immutable vow;
-    KegAbstract public immutable keg;
+    // --- Variable ---
+    VatAbstract     public immutable vat;
+    address         public immutable vow;
+    KegAbstract     public immutable keg;
     DaiJoinAbstract public immutable daiJoin;
 
     bytes32 public flight;  // The target flight in keg
@@ -61,6 +62,7 @@ contract Tap {
         flight = flight_;
         rate = rate_;
         rho = now;
+
         vat_.hope(address(daiJoin_));
         dai.approve(address(keg_), uint256(-1));
     }

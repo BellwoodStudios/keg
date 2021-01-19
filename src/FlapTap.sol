@@ -36,12 +36,13 @@ contract FlapTap {
         _;
     }
 
-    VatAbstract public immutable vat;
-    FlapAbstract public immutable flapper;
-    KegAbstract public immutable keg;
+    // --- Variable ---
+    VatAbstract     public immutable vat;
+    FlapAbstract    public immutable flapper;
+    KegAbstract     public immutable keg;
     DaiJoinAbstract public immutable daiJoin;
 
-    uint256  public live;   // Active Flag
+    uint256 public live;    // Active Flag
     bytes32 public flight;  // The target flight in keg
     uint256 public flow;    // The fraction of the lot which goes to the keg [wad]
 
@@ -49,8 +50,9 @@ contract FlapTap {
     uint256 constant RAY = 10 ** 27;
     uint256 constant RAD = 10 ** 45;
 
+    // --- Init ---
     constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address flapper_, bytes32 flight_, uint256 flow_) public {
-        wards[msg.sender] = 1;
+        wards[msg.sender] = 1; // TODO no Note should use the auther Auth with emit.
         keg = keg_;
         daiJoin = daiJoin_;
         DaiAbstract dai = DaiAbstract(daiJoin_.dai());
@@ -59,6 +61,7 @@ contract FlapTap {
         flight = flight_;
         require((flow = flow_) <= WAD, "FlapTap/invalid-flow");
         live = 1;
+
         vat_.hope(flapper_);
         vat_.hope(address(daiJoin_));
         dai.approve(address(keg_), uint256(-1));
