@@ -73,7 +73,7 @@ contract FlapTap {
 
         require(flow_ <= WAD, "FlapTap/invalid-flow");
 
-        vat_.hope(flapper_);
+        vat_.hope(flapper_); // TODO do we need this guy ??
         vat_.hope(address(daiJoin_));
 
         require(dai.approve(address(keg_), uint256(-1)), "FlapTap/dai-approval-failure");
