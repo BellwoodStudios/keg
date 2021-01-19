@@ -79,29 +79,7 @@ contract Keg {
         require(y == 0 || (z = x * y) / y == x);
     }
 
-    // Credits people with rights to withdraw funds from the pool using a preset flight
-    function pour(bytes32 flight, uint256 wad) external stoppable {
-        Pint[] memory pints = flights[flight];
-
-        require(wad > 0, "Keg/wad-zero");
-        require(pints.length > 0, "Keg/flight-not-set");       // pints will be empty when not set
-        
-        uint256 suds = 0;
-        for (uint256 i = 0; i < pints.length; i++) {
-            Pint memory pint = pints[i];
-            uint256 sud;
-            if (i != pints.length - 1) {
-                // Otherwise use the share amount
-                sud = mul(wad, pints[i].share) / WAD;
-            } else {
-                // Add whatevers left over to the last mug to account for rounding errors
-                sud = sub(wad, suds);
-            }
-            suds = add(suds, sud);
-            token.transferFrom(msg.sender, address(pint.bum), sud);
-            emit Pour(pint.bum, sud);
-        }
-    }
+    // --- Administration ---
 
     // Pre-authorize a flight distribution of funds
     function seat(bytes32 flight, address[] calldata bums, uint256[] calldata shares) external auth {
@@ -127,5 +105,34 @@ contract Keg {
         }
         emit Revoke(flight);
     }
+
+    // --- External ---
+
+    // Credits people with rights to withdraw funds from the pool using a preset flight
+    function pour(bytes32 flight, uint256 wad) external stoppable {
+        Pint[] memory pints = flights[flight];
+
+        require(wad > 0, "Keg/wad-zero");
+        require(pints.length > 0, "Keg/flight-not-set");       // pints will be empty when not set
+
+        uint256 suds = 0;
+        for (uint256 i = 0; i < pints.length; i++) {
+            Pint memory pint = pints[i];
+            uint256 sud;
+            if (i != pints.length - 1) {
+                // Otherwise use the share amount
+                sud = mul(wad, pints[i].share) / WAD;
+            } else {
+                // Add whatevers left over to the last mug to account for rounding errors
+                sud = sub(wad, suds);
+            }
+            suds = add(suds, sud);
+
+            emit Pour(pint.bum, sud);
+
+            require(token.transferFrom(msg.sender, address(pint.bum), sud), "Keg/transfer-failure");
+        }
+    }
+
 
 }
