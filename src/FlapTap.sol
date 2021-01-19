@@ -29,8 +29,8 @@ contract FlapTap {
 
     // --- Auth ---
     mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; }
-    function deny(address usr) external auth { wards[usr] = 0; }
+    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
+    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
     modifier auth {
         require(wards[msg.sender] == 1, "FlapTap/not-authorized");
         _;
@@ -50,10 +50,18 @@ contract FlapTap {
     uint256 constant RAY = 10 ** 27;
     uint256 constant RAD = 10 ** 45;
 
+    // --- Events ---
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+    event File(bytes32 indexed what, bytes32 data);
+    event File(bytes32 indexed what, uint256 data);
+
     // --- Init ---
     constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address flapper_, bytes32 flight_, uint256 flow_) public {
-        wards[msg.sender] = 1; // TODO no Note should use the auther Auth with emit.
-        keg = keg_;
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
+
+        keg     = keg_;
         daiJoin = daiJoin_;
         DaiAbstract dai = DaiAbstract(daiJoin_.dai());
         VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
@@ -80,10 +88,14 @@ contract FlapTap {
     function file(bytes32 what, bytes32 data) external auth {
         if (what == "flight") flight = data;
         else revert("FlapTap/file-unrecognized-param");
+
+        emit File(what, data);
     }
     function file(bytes32 what, uint256 data) external auth {
         if (what == "flow") require((flow = data) <= WAD, "FlapTap/invalid-flow");
         else revert("FlapTap/file-unrecognized-param");
+
+        emit File(what, data);
     }
 
     function kick(uint256 lot, uint256 bid) external auth returns (uint256) {

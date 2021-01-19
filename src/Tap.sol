@@ -27,8 +27,8 @@ contract Tap {
 
     // --- Auth ---
     mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; }
-    function deny(address usr) external auth { wards[usr] = 0; }
+    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
+    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
     modifier auth {
         require(wards[msg.sender] == 1, "Tap/not-authorized");
         _;
@@ -52,9 +52,19 @@ contract Tap {
 
     uint256 constant RAY = 10 ** 27;
 
+    // --- Events ---
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+    event File(bytes32 indexed what, bytes32 data);
+    event File(bytes32 indexed what, uint256 data);
+
+
+    // --- Init ---
     constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address vow_, bytes32 flight_, uint256 rate_) public {
         wards[msg.sender] = 1;
-        keg = keg_;
+        emit Rely(msg.sender);
+
+        keg     = keg_;
         daiJoin = daiJoin_;
         DaiAbstract dai = DaiAbstract(daiJoin_.dai());
         VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
@@ -77,11 +87,15 @@ contract Tap {
         require(now == rho, "Tap/rho-not-updated");
         if (what == "flight") flight = data;
         else revert("Tap/file-unrecognized-param");
+
+        emit File(what, data);
     }
     function file(bytes32 what, uint256 data) external auth {
         require(now == rho, "Tap/rho-not-updated");
         if (what == "rate") rate = data;
         else revert("Tap/file-unrecognized-param");
+
+        emit File(what, data);
     }
 
     function pump() external stoppable {  // TODO Check re-entrance you could withdraw all as the rho was set at the end.
