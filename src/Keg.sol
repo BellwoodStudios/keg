@@ -17,7 +17,7 @@
 
 pragma solidity ^0.6.7;
 
-import "dss-interfaces/dapp/DSTokenAbstract.sol";
+import "dss-interfaces/ERC/GemAbstract.sol";
 
 // Preset ratio payout system for streaming payments
 contract Keg {
@@ -43,7 +43,7 @@ contract Keg {
     modifier stoppable { require(stopped == 0, "Keg/is-stopped"); _; }
 
     // --- Variable ---
-    DSTokenAbstract public immutable token;
+    GemAbstract public immutable token;
 
     // Define payout ratios
     mapping (bytes32 => Pint[]) public flights;       // The Pint definitions
@@ -59,7 +59,7 @@ contract Keg {
 
     // --- Init ---
     constructor(address token_) public {
-        token = DSTokenAbstract(token_);
+        token = GemAbstract(token_);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
