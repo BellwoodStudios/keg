@@ -97,8 +97,10 @@ contract FlapTap {
     }
 
     function file(bytes32 what, uint256 data) external auth {
-        if (what == "flow") require((flow = data) <= WAD, "FlapTap/invalid-flow");
-        else revert("FlapTap/file-unrecognized-param");
+        if (what == "flow") {
+            require( data <= WAD, "FlapTap/invalid-flow");
+            flow = data;
+        } else revert("FlapTap/file-unrecognized-param");
 
         emit File(what, data);
     }
@@ -117,7 +119,7 @@ contract FlapTap {
         require(live == 1, "FlapTap/not-live");
         uint256 rad = vat.dai(address(flapper));
         flapper.cage(rad);
-        vat.move(address(this), msg.sender, rad);
+        vat.move(address(this), msg.sender, rad); // TODO There is no monies there it is in dai.
         live = 0;
     }
 }
