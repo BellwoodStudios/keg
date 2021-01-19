@@ -98,14 +98,16 @@ contract Tap {
         emit File(what, data);
     }
 
-    function pump() external stoppable {  // TODO Check re-entrance you could withdraw all as the rho was set at the end.
-        require(now >= rho, "Tap/invalid-now");
+    // --- External ---
+    function pump() external stoppable {
+        require(now > rho, "Tap/invalid-now");
         uint256 wad = mul(now - rho, rate);
         rho = now;
-        if (wad > 0) {  // TODO Do we need this ??
-            vat.suck(address(vow), address(this), mul(wad, RAY));
-            daiJoin.exit(address(this), wad);
-            keg.pour(flight, wad);
-        }
+
+        require(wad > 0, "Tap/invalid-wad");
+
+        vat.suck(address(vow), address(this), mul(wad, RAY));
+        daiJoin.exit(address(this), wad);
+        keg.pour(flight, wad);
     }
 }
