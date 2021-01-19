@@ -84,14 +84,14 @@ contract Tap {
         else revert("Tap/file-unrecognized-param");
     }
 
-    function pump() external stoppable {
+    function pump() external stoppable {  // TODO Check re-entrance you could withdraw all as the rho was set at the end.
         require(now >= rho, "Tap/invalid-now");
         uint256 wad = mul(now - rho, rate);
-        if (wad > 0) {
+        rho = now;
+        if (wad > 0) {  // TODO Do we need this ??
             vat.suck(address(vow), address(this), mul(wad, RAY));
             daiJoin.exit(address(this), wad);
             keg.pour(flight, wad);
         }
-        rho = now;
     }
 }
