@@ -56,7 +56,7 @@ contract FlapTap {
     event File(bytes32 indexed what, bytes32 data);
     event File(bytes32 indexed what, uint256 data);
 
-    // --- Init ---
+    // --- Init --- // TODO rename `flow` to percent or something mindful
     constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address flapper_, bytes32 flight_, uint256 flow_) public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -105,10 +105,10 @@ contract FlapTap {
         emit File(what, data);
     }
 
-    function kick(uint256 lot, uint256 bid) external auth returns (uint256) {
+    function kick(uint256 lot, uint256 bid) external auth returns (uint256) { // bid [wad]
         require(live == 1, "FlapTap/not-live");
-        uint256 wad = mul(lot, flow) / RAD;
-        uint256 rad = mul(wad, RAY);
+        uint256 wad = mul(lot, flow) / RAD;   // TODO ?? the flow is in wad or in rad? refer to param it is wad. Based on the test it is either in WAD or RAD. need to be clarify.
+        uint256 rad = mul(wad, RAY); // TODO Don't need to div by WAD ???
         vat.move(msg.sender, address(this), lot);
         daiJoin.exit(address(this), wad);
         keg.pour(flight, wad);
@@ -119,7 +119,7 @@ contract FlapTap {
         require(live == 1, "FlapTap/not-live");
         uint256 rad = vat.dai(address(flapper));
         flapper.cage(rad);
-        vat.move(address(this), msg.sender, rad); // TODO There is no monies there it is in dai.
+        vat.move(address(this), msg.sender, rad); // TODO There is no monies in the vat, it is in dai.
         live = 0;
     }
 }

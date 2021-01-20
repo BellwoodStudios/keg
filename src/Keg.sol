@@ -82,6 +82,7 @@ contract Keg {
     // --- Administration ---
 
     // Pre-authorize a flight distribution of funds
+    // TODO please rename seat() very hard to understand perhaps authorize()
     function seat(bytes32 flight, address[] calldata bums, uint256[] calldata shares) external auth {
         require(bums.length == shares.length, "Keg/unequal-bums-and-shares");
         require(bums.length > 0, "Keg/zero-bums");
@@ -94,15 +95,16 @@ contract Keg {
             flights[flight].push(Pint(bums[i], shares[i]));
         }
         require(total == WAD, "Keg/invalid-flight");
-        emit Seat(flight);
+        emit Seat(flight); // TODO same here rename it please
     }
 
-    // Deauthorize a flight
+    // un-authorize a flight
     function revoke(bytes32 flight) external auth {
         require(flights[flight].length > 0, "Keg/flight-not-set");       // pints will be 0 when not set
         for (uint256 i = 0; i < flights[flight].length; i++) {
             delete flights[flight][i];
         }
+        // TODO Do we need to remove the flights[flight] ??
         emit Revoke(flight);
     }
 
