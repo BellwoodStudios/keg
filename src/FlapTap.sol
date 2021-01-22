@@ -56,7 +56,7 @@ contract FlapTap {
     event File(bytes32 indexed what, bytes32 data);
     event File(bytes32 indexed what, uint256 data);
 
-    // --- Init --- // TODO rename `flow` to percent or something mindful
+    // --- Init ---
     constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address flapper_, bytes32 flight_, uint256 flow_) public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -73,7 +73,7 @@ contract FlapTap {
 
         require(flow_ <= WAD, "FlapTap/invalid-flow");
 
-        vat_.hope(flapper_); // TODO do we need this guy ??
+        vat_.hope(flapper_);
         vat_.hope(address(daiJoin_));
 
         require(dai.approve(address(keg_), uint256(-1)), "FlapTap/dai-approval-failure");
@@ -98,17 +98,17 @@ contract FlapTap {
 
     function file(bytes32 what, uint256 data) external auth {
         if (what == "flow") {
-            require( data <= WAD, "FlapTap/invalid-flow");
+            require(data <= WAD, "FlapTap/invalid-flow");
             flow = data;
         } else revert("FlapTap/file-unrecognized-param");
 
         emit File(what, data);
     }
 
-    function kick(uint256 lot, uint256 bid) external auth returns (uint256) { // bid [wad]
+    function kick(uint256 lot, uint256 bid) external auth returns (uint256) {
         require(live == 1, "FlapTap/not-live");
-        uint256 wad = mul(lot, flow) / RAD;   // TODO ?? the flow is in wad or in rad? refer to param it is wad. Based on the test it is either in WAD or RAD. need to be clarify.
-        uint256 rad = mul(wad, RAY); // TODO Don't need to div by WAD ???
+        uint256 wad = mul(lot, flow) / RAD;
+        uint256 rad = mul(wad, RAY);
         vat.move(msg.sender, address(this), lot);
         daiJoin.exit(address(this), wad);
         keg.pour(flight, wad);
