@@ -101,13 +101,13 @@ contract Tap {
     // --- External ---
     function pump() external stoppable {
         require(now > rho, "Tap/invalid-now");
-        uint256 wad = mul(now - rho, rate);  // TODO How is that working? We clearly need to increase the test coverage
+        uint256 wad = mul(now - rho, rate);
         rho = now;
 
         require(wad > 0, "Tap/invalid-wad");
 
         vat.suck(address(vow), address(this), mul(wad, RAY));
-        daiJoin.exit(address(this), wad); // TODO need an escape way dai can be locked for ever. like cage() from FlapTap when it will work.
+        daiJoin.exit(address(this), wad);
         keg.pour(flight, wad);
     }
 }

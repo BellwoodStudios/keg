@@ -119,7 +119,7 @@ contract FlapTap {
         require(live == 1, "FlapTap/not-live");
         uint256 rad = vat.dai(address(flapper));
         flapper.cage(rad);
-        vat.move(address(this), msg.sender, rad); // TODO There is no monies in the vat, it is in dai.
+        vat.move(address(this), msg.sender, rad);
         live = 0;
     }
 }

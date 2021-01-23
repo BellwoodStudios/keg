@@ -103,7 +103,7 @@ contract Keg {
         for (uint256 i = 0; i < flights[flight].length; i++) {
             delete flights[flight][i];
         }
-        // TODO Do we need to remove the flights[flight] ??
+        // TODO remove the flights[flight]
         emit Revoke(flight);
     }
 
