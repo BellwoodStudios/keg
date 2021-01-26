@@ -104,8 +104,6 @@ contract Tap {
         uint256 wad = mul(now - rho, rate);
         rho = now;
 
-        require(wad > 0, "Tap/invalid-wad");
-
         vat.suck(address(vow), address(this), mul(wad, RAY));
         daiJoin.exit(address(this), wad);
         keg.pour(flight, wad);
