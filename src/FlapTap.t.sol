@@ -192,27 +192,12 @@ contract KegTest is DSTest, DSMath {
         keg = KegAbstract(address(new Keg(address(dai))));
         dai.approve(address(keg), uint256(-1));
         vat.hope(address(keg));
-        flapTap = new FlapTap(keg, daiJoin, address(flapper), "flap",  0.5 ether);
+        flapTap = new FlapTap(keg, daiJoin, address(flapper),  0.5 ether);
         flapTap.rely(address(vow));
 
         wallet1 = new Wallet();
         wallet2 = new Wallet();
         wallet3 = new Wallet();
-    }
-
-
-    // file("flight")
-    function test_flight() public {
-        assertEq(flapTap.flight(), "flap");
-
-        flapTap.file("flight", "opt");
-
-        assertEq(flapTap.flight(), "opt");
-    }
-
-    function testFail_flight() public {
-        tap.deny(me);
-        tap.file("flight", "opt");
     }
 
     // file("flow")
@@ -232,4 +217,50 @@ contract KegTest is DSTest, DSMath {
         flapTap.file("flow", WAD + 1000);
     }
 
+    // kick
+    function test_flap_tap_deploy() public {
+        address[] memory wallets = new address[](2);
+        wallets[0] = address(wallet1);
+        wallets[1] = address(wallet2);
+        uint256[] memory amts = new uint256[](2);
+        amts[0] = 0.50 ether;   // 50% split
+        amts[1] = 0.50 ether;   // 50% split
+        keg.seat(wallets, amts);
+
+        assertEq(flapper.kicks(), 0);
+        assertEq(vow.flap(), 1);
+        assertEq(flapper.kicks(), 1);
+        uint256 auctioned = vow.bump();
+        assertEq(flapper.amountAuctioned(), auctioned);
+        assertEq(vat.dai(address(flapper)), auctioned);
+
+        // Insert the TapFlap in between the vow and flapper
+        vow.file("flapper", address(flapTap));
+
+        assertEq(vow.flap(), 2);
+        assertEq(flapper.kicks(), 2);
+        uint256 wad = vow.bump() * flapTap.flow() / RAD;
+        auctioned += vow.bump() - wad * RAY;
+        assertEq(flapper.amountAuctioned(), auctioned);
+        assertEq(vat.dai(address(flapper)), auctioned);
+        assertEq(dai.balanceOf(address(wallet1)), wad / 2);
+        assertEq(dai.balanceOf(address(wallet2)), wad / 2);
+    }
+
+    // cage
+    function test_flap_tap_cage() public {
+        address[] memory wallets = new address[](2);
+        wallets[0] = address(wallet1);
+        wallets[1] = address(wallet2);
+        uint256[] memory amts = new uint256[](2);
+        amts[0] = 0.50 ether;   // 50% split
+        amts[1] = 0.50 ether;   // 50% split
+        keg.seat(wallets, amts);
+        vow.file("flapper", address(flapTap));
+        vow.flap();
+        vow.cage();
+
+        // All dai should be returned to the vow
+        assertEq(vat.dai(address(vow)), vow.bump() / 2);
+    }
 }

@@ -160,6 +160,20 @@ contract KegTest is DSTest, DSMath {
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256('hevm cheat code'))));
 
+    function assertEq(uint256 a, uint256 b, uint256 tolerance) internal {
+        if (a < b) {
+            uint256 tmp = a;
+            a = b;
+            b = tmp;
+        }
+        if (a - b > a * tolerance / WAD) {
+            emit log_bytes32("Error: Wrong `uint' value");
+            emit log_named_uint("  Expected", b);
+            emit log_named_uint("    Actual", a);
+            fail();
+        }
+    }
+
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
 
@@ -176,7 +190,7 @@ contract KegTest is DSTest, DSMath {
 
         keg = KegAbstract(address(new Keg(address(dai))));
 
-        tap = new Tap(keg, daiJoin, address(vow), "operations", WAD / (1 days));
+        tap = new Tap(keg, daiJoin, address(vow), WAD / (1 days));
         vat.rely(address(tap));
 
         wallet1 = new Wallet();
@@ -189,38 +203,9 @@ contract KegTest is DSTest, DSMath {
         uint256[] memory amts = new uint256[](2);
         amts[0] = 0.25 ether;   // 25% split
         amts[1] = 0.75 ether;   // 75% split
-        bytes32 flight = "operations";
 
-        keg.seat(flight, wallets, amts);
+        keg.seat(wallets, amts);
 
-    }
-
-
-    // file("flight")
-    function test_flight() public {
-        assertEq(tap.flight(), "operations");
-
-        tap.file("flight", "opt");
-
-        assertEq(tap.flight(), "opt");
-    }
-
-    function testFail_flight() public {
-        tap.deny(me);
-        tap.file("flight", "opt");
-    }
-
-    function testFail_flight_with_time_effect() public {
-        hevm.warp(1 days);
-        tap.file("flight", "opt");
-    }
-
-    function test_flight_with_time_effect_after_pump() public {
-        hevm.warp(1 days);
-        tap.pump();
-        tap.file("flight", "opt");
-
-        assertEq(tap.flight(), "opt");
     }
 
     // file("rate")
@@ -270,4 +255,55 @@ contract KegTest is DSTest, DSMath {
         tap.pump();
     }
 
+
+    //
+
+    function test_tap_pump() public {
+        address[] memory wallets = new address[](3);
+        wallets[0] = address(wallet1);
+        wallets[1] = address(wallet2);
+        wallets[2] = address(wallet3);
+        uint256[] memory amts = new uint256[](3);
+        amts[0] = 0.65 ether;   // 65% split
+        amts[1] = 0.25 ether;   // 25% split
+        amts[2] = 0.10 ether;   // 10% split
+        keg.seat(wallets, amts);
+
+        tap.file("rate", 10000 * WAD / 1 days);
+        hevm.warp(1 days); // the amount is 1 dai a day
+        assertEq(now - tap.rho(), 1 days);
+        tap.pump();
+        assertEq(dai.balanceOf(address(wallet1)), 10000 * WAD * 65 / 100, WAD / 100000);  // Account for rounding errors of 0.001%
+        assertEq(dai.balanceOf(address(wallet2)), 10000 * WAD * 25 / 100, WAD / 100000);
+        assertEq(dai.balanceOf(address(wallet3)), 10000 * WAD * 10 / 100, WAD / 100000);
+    }
+
+    function testFail_tap_rate_change_without_pump() public {
+        address[] memory wallets = new address[](3);
+        wallets[0] = address(wallet1);
+        wallets[1] = address(wallet2);
+        wallets[2] = address(wallet3);
+        uint256[] memory amts = new uint256[](3);
+        amts[0] = 0.65 ether;   // 65% split
+        amts[1] = 0.25 ether;   // 25% split
+        amts[2] = 0.10 ether;   // 10% split
+        keg.seat(wallets, amts);
+        hevm.warp(1 days + 1);
+        tap.file("rate", uint256(2 ether) / 1 days);
+    }
+
+    function test_tap_rate_change_with_pump() public {
+        address[] memory wallets = new address[](3);
+        wallets[0] = address(wallet1);
+        wallets[1] = address(wallet2);
+        wallets[2] = address(wallet3);
+        uint256[] memory amts = new uint256[](3);
+        amts[0] = 0.65 ether;   // 65% split
+        amts[1] = 0.25 ether;   // 25% split
+        amts[2] = 0.10 ether;   // 10% split
+        keg.seat(wallets, amts);
+        hevm.warp(1 days + 1);
+        tap.pump();
+        tap.file("rate", uint256(2 ether) / 1 days);
+    }
 }
