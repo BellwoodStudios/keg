@@ -46,7 +46,7 @@ contract Keg {
     GemAbstract public immutable token;
 
     // Define payout ratios
-    mapping (bytes32 => Pint[]) public flights;       // The Pint definitions
+    Pint[] public flight;       // The Pint definitions
 
     // --- Events ---
     event Rely(address indexed usr);
@@ -54,8 +54,7 @@ contract Keg {
     event Start();
     event Stop();
     event Pour(address indexed usr, uint256 amount);
-    event Seat(bytes32 indexed flight);
-    event Revoke(bytes32 indexed flight);
+    event Seat();
 
     // --- Init ---
     constructor(address token_) public {
@@ -71,10 +70,6 @@ contract Keg {
         require((z = x + y) >= x);
     }
 
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x);
-    }
-
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x);
     }
@@ -82,58 +77,41 @@ contract Keg {
     // --- Administration ---
 
     // Pre-authorize a flight distribution of funds
-    function seat(bytes32 flight, address[] calldata bums, uint256[] calldata shares) external auth {
+    function seat(address[] calldata bums, uint256[] calldata shares) external auth {
         require(bums.length == shares.length, "Keg/unequal-bums-and-shares");
         require(bums.length > 0, "Keg/zero-bums");
 
+        delete flight;
         // Pint shares need to add up to 100%
         uint256 total = 0;
         for (uint256 i = 0; i < bums.length; i++) {
             require(bums[i] != address(0), "Keg/no-address-0");
             total = add(total, shares[i]);
-            flights[flight].push(Pint(bums[i], shares[i]));
+            flight.push(Pint(bums[i], shares[i]));
         }
         require(total == WAD, "Keg/invalid-flight");
-        emit Seat(flight);
-    }
 
-    // Deauthorize a flight
-    function revoke(bytes32 flight) external auth {
-        require(flights[flight].length > 0, "Keg/flight-not-set");       // pints will be 0 when not set
-        for (uint256 i = 0; i < flights[flight].length; i++) {
-            delete flights[flight][i];
-        }
-        // TODO remove the flights[flight]
-        emit Revoke(flight);
+        emit Seat();
     }
 
     // --- External ---
 
     // Credits people with rights to withdraw funds from the pool using a preset flight
-    function pour(bytes32 flight, uint256 wad) external stoppable {
-        Pint[] memory pints = flights[flight];
+    function pour() external stoppable {
+        Pint[] memory pints = flight;
+        uint256 _balance = token.balanceOf(address(this));
 
-        require(wad > 0, "Keg/wad-zero");
+        require(_balance > 0, "Keg/balance-zero");
         require(pints.length > 0, "Keg/flight-not-set");       // pints will be empty when not set
 
-        uint256 suds = 0;
         for (uint256 i = 0; i < pints.length; i++) {
             Pint memory pint = pints[i];
-            uint256 sud;
-            if (i != pints.length - 1) {
-                // Otherwise use the share amount
-                sud = mul(wad, pints[i].share) / WAD;
-            } else {
-                // Add whatevers left over to the last mug to account for rounding errors
-                sud = sub(wad, suds);
-            }
-            suds = add(suds, sud);
+            uint256 _amount = mul(_balance, pints[i].share)/ WAD;
 
-            emit Pour(pint.bum, sud);
+            emit Pour(pint.bum, _amount);
 
-            require(token.transferFrom(msg.sender, address(pint.bum), sud), "Keg/transfer-failure");
+            require(token.transfer(address(pint.bum), _amount), "Keg/transfer-failure");
         }
     }
-
 
 }

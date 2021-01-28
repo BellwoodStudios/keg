@@ -46,7 +46,6 @@ contract Tap {
     KegAbstract     public immutable keg;
     DaiJoinAbstract public immutable daiJoin;
 
-    bytes32 public flight;  // The target flight in keg
     uint256 public rate;    // The per-second rate of distributing funds [wad]
     uint256 public rho;     // Time of last pump [unix epoch time]
 
@@ -55,26 +54,22 @@ contract Tap {
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event File(bytes32 indexed what, bytes32 data);
     event File(bytes32 indexed what, uint256 data);
 
 
     // --- Init ---
-    constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address vow_, bytes32 flight_, uint256 rate_) public {
+    constructor(KegAbstract keg_, DaiJoinAbstract daiJoin_, address vow_, uint256 rate_) public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
         keg     = keg_;
         daiJoin = daiJoin_;
         vow     = vow_;
-        flight  = flight_;
         rate    = rate_;
         rho     = block.timestamp;
         VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
-        DaiAbstract dai  = DaiAbstract(daiJoin_.dai());
 
         vat_.hope(address(daiJoin_));
-        require(dai.approve(address(keg_), uint256(-1)), "Tap/dai-approval-failure");
     }
 
     // --- Math ---
@@ -83,13 +78,6 @@ contract Tap {
     }
 
     // --- Administration ---
-    function file(bytes32 what, bytes32 data) external auth {
-        require(block.timestamp == rho, "Tap/rho-not-updated");
-        if (what == "flight") flight = data;
-        else revert("Tap/file-unrecognized-param");
-
-        emit File(what, data);
-    }
     function file(bytes32 what, uint256 data) external auth {
         require(block.timestamp == rho, "Tap/rho-not-updated");
         if (what == "rate") rate = data;
@@ -105,7 +93,7 @@ contract Tap {
         rho = block.timestamp;
 
         vat.suck(address(vow), address(this), mul(wad, RAY));
-        daiJoin.exit(address(this), wad);
-        keg.pour(flight, wad);
+        daiJoin.exit(address(keg), wad);
+        keg.pour();
     }
 }
