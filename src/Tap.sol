@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-pragma solidity ^0.6.7;
+pragma solidity ^0.6.11;
 
 import "dss-interfaces/dss/VatAbstract.sol";
 import "dss-interfaces/dss/DaiAbstract.sol";
@@ -66,7 +66,7 @@ contract Tap {
         daiJoin = daiJoin_;
         vow     = vow_;
         rate    = rate_;
-        rho     = now;
+        rho     = block.timestamp;
         VatAbstract vat_ = vat = VatAbstract(daiJoin_.vat());
 
         vat_.hope(address(daiJoin_));
@@ -79,7 +79,7 @@ contract Tap {
 
     // --- Administration ---
     function file(bytes32 what, uint256 data) external auth {
-        require(now == rho, "Tap/rho-not-updated");
+        require(block.timestamp == rho, "Tap/rho-not-updated");
         if (what == "rate") rate = data;
         else revert("Tap/file-unrecognized-param");
 
@@ -88,11 +88,9 @@ contract Tap {
 
     // --- External ---
     function pump() external stoppable {
-        require(now > rho, "Tap/invalid-now");
-        uint256 wad = mul(now - rho, rate);
-        rho = now;
-
-        require(wad > 0, "Tap/invalid-wad");
+        require(block.timestamp > rho, "Tap/invalid-now");
+        uint256 wad = mul(block.timestamp - rho, rate);
+        rho = block.timestamp;
 
         vat.suck(address(vow), address(this), mul(wad, RAY));
         daiJoin.exit(address(keg), wad);

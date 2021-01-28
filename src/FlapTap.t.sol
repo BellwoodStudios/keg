@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-pragma solidity ^0.6.7;
+pragma solidity ^0.6.11;
 
 import "ds-test/test.sol";
 import "ds-math/math.sol";
@@ -135,7 +135,7 @@ contract Wallet {
 }
 
 
-contract KegTest is DSTest, DSMath {
+contract FlapTapTest is DSTest, DSMath {
     Hevm hevm;
 
     address constant public MCD_VOW = 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF; // Fake address for mocking
